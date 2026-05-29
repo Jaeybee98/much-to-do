@@ -1,26 +1,23 @@
 #!/bin/bash
 set -e
 
-# Configuration variables (Must match your S3 bucket from Phase 1)
-BUCKET_NAME="starttech-frontend-app-jaeybee98"
-DIST_DIR="./frontend/build"
+# Define deployment directories
+BUILD_DIR="./Client/dist"
+S3_BUCKET="much-to-do-frontend-bucket" # Replace this with your actual S3 bucket name if it's different!
 
-echo "===================================================="
+echo "=================================================="
 echo "📦 StartTech: Deploying Frontend Static Assets to S3"
-echo "===================================================="
+echo "=================================================="
 
-if [ ! -d "$DIST_DIR" ]; then
-    echo "❌ Error: Production build directory '$DIST_DIR' not found."
+# Check if build directory exists
+if [ ! -d "$BUILD_DIR" ]; then
+    echo "❌ Error: Production build directory '$BUILD_DIR' not found."
     echo "Please ensure 'npm run build' completes successfully within the pipeline."
     exit 1
 fi
 
-echo "Step 1: Syncing compiled assets to AWS S3..."
-aws s3 sync "$DIST_DIR" "s3://$BUCKET_NAME" --delete
+# Sync compiled production files to your AWS S3 bucket
+echo "🚀 Syncing $BUILD_DIR with S3 bucket: s3://$S3_BUCKET..."
+aws s3 sync "$BUILD_DIR" "s3://$S3_BUCKET" --delete
 
-echo "Step 2: Asset synchronization complete. Current bucket root:"
-aws s3 ls "s3://$BUCKET_NAME"
-
-echo "===================================================="
-echo "🎉 Frontend assets successfully uploaded!"
-echo "===================================================="
+echo "✅ Frontend assets deployed successfully!"
