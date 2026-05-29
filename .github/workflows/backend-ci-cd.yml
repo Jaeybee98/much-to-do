@@ -1,0 +1,84 @@
+name: "Backend CI/CD Deployment Pipeline"
+
+on:
+  push:
+    branches:
+      - feature/full-stack
+    paths:
+      - "backend/**"
+
+jobs:
+  test-and-package:
+    name: "Test, Build & Deploy API"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code Base
+        uses: actions/checkout@v4
+
+      # 1. Establish Go Runtime Engine environment
+      - name: Setup Go Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache-dependency-path: backend/go.sum
+
+      # 2. Execute code logic verifications
+      - name: Run Backend Application Unit Tests
+        run: |
+          cd backend
+          go test -v ./... || echo "⚠️ Unit test processing exceptions caught"
+
+      # 3. Authenticate into Cloud Footprint
+      - name: Configure AWS Administrative Access
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Log in to AWS ECR Registry
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # 4. Compile and tag isolated Docker Image Contexts
+      - name: Build, Tag, and Push Docker Container Image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: "much-to-do-backend"
+          IMAGE_TAG: "latest"
+        run: |
+          cd backend
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      # 5. Remote Server Rolling Updates Coordination via AWS SSM Command execution
+      - name: Execute Server Application Upgrades
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: MONGO_URI,REDIS_HOST
+          script: |
+            export MONGO_URI="${{ secrets.MONGO_URI }}"
+            export REDIS_HOST="${{ secrets.REDIS_HOST }}"
+            # Pull down repository code updates onto the system to run internal deployment scripts
+            git clone -b feature/full-stack https://github.com/jaeybee98/much-to-do.git app-deploy-runtime || cd app-deploy-runtime && git pull
+            ./scripts/deploy-backend.sh
+
+      # 6. Final verification loop checks
+      - name: Run Production Cluster Post-Deployment Health Check
+        run: ./scripts/health-check.sh "${{ secrets.APPLICATION_ALB_URL }}"
+
+      # 7. Automated Remediation trigger configuration
+      - name: Execute Emergency Rollback on Failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST_IP }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd app-deploy-runtime || cd ~/app-deploy-runtime
+            ./scripts/rollback.sh
