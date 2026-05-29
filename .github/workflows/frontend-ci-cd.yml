@@ -46,7 +46,7 @@ jobs:
           aws-region: us-east-1
 
       - name: Sync Production Assets to S3
-        run: ./scripts/deploy-frontend.sh
+        run: bash ./scripts/deploy-frontend.sh
 
       - name: Invalidate CloudFront Distribution Cache
         run: |

@@ -1,1 +1,1 @@
-# Pipeline CloudFront Fix v1.0.6
+# Pipeline direct bash execution fix v1.0.7
