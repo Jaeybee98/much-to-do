@@ -51,4 +51,4 @@ jobs:
       - name: Invalidate CloudFront Distribution Cache
         run: |
           echo "⚡ Clearing edge location content delivery caches..."
-          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*""
+          aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"

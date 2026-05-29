@@ -1,1 +1,1 @@
-# Pipeline Permission Update v1.0.5
+# Pipeline CloudFront Fix v1.0.6
