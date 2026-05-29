@@ -3,7 +3,7 @@ set -e
 
 # Define deployment directories
 BUILD_DIR="./Client/dist"
-S3_BUCKET="much-to-do-frontend-bucket" # Replace this with your actual S3 bucket name if it's different!
+S3_BUCKET="starttech-frontend-app-jaeybee98"
 
 echo "=================================================="
 echo "📦 StartTech: Deploying Frontend Static Assets to S3"
