@@ -21,3 +21,4 @@ echo "🚀 Syncing $BUILD_DIR with S3 bucket: s3://$S3_BUCKET..."
 aws s3 sync "$BUILD_DIR" "s3://$S3_BUCKET" --delete
 
 echo "✅ Frontend assets deployed successfully!"
+# Triggering active pipeline deployment v1.0.2
