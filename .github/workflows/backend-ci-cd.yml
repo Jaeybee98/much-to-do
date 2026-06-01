@@ -35,8 +35,6 @@ jobs:
     name: Docker Build & ECR Push
     needs: test-and-scan
     runs-on: ubuntu-latest
-    outputs:
-      registry: ${{ steps.login-ecr.outputs.registry }}
     steps:
       - name: Checkout Repository Code
         uses: actions/checkout@v4
@@ -52,7 +50,6 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
-       Berk-and-Tag Production Docker Image
       - name: Build and Tag Production Docker Image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
