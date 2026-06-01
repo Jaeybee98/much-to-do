@@ -1,30 +1,21 @@
 #!/bin/bash
-set -e
 
-APP_NAME="much-to-do-backend"
+ASG_NAME="starttech-asg"
+REGION="us-east-1"
 
-echo "===================================================="
-echo "🚨 Critical Alert: Executing Automated Rollback Loop"
-echo "===================================================="
+echo "🚨 Initiating deployment rollback for ${ASG_NAME}..."
 
-if [ "$(docker images -q ${APP_NAME}:previous 2> /dev/null)" ]; then
-    echo "Step 1: Tearing down broken application version container..."
-    docker stop "$APP_NAME" || true
-    docker rm "$APP_NAME" || true
-    
-    echo "Step 2: Restoring stable previous container instance..."
-    docker run -d \
-      --name "$APP_NAME" \
-      --restart unless-stopped \
-      -p 8080:8080 \
-      -e MONGO_URI="$MONGO_URI" \
-      -e REDIS_HOST="$REDIS_HOST" \
-      -e PORT="8080" \
-      "${APP_NAME}:previous"
-      
-    echo "✅ Rollback strategy execution completed!"
-else
-    echo "❌ System Error: No backup container snapshot verified found on disk server."
-    exit 1
-fi
-echo "===================================================="
+# Find the previous launch template version (Version 1)
+echo "🔄 Reverting Auto Scaling Group to stable template Version 1..."
+aws ec2 update-auto-scaling-group \
+    --auto-scaling-group-name "$ASG_NAME" \
+    --launch-template "LaunchTemplateName=starttech-lt-20260529205943823000000004,Version=1" \
+    --region "$REGION"
+
+# Trigger a fresh instance refresh to replace running containers with the stable version
+echo "🔄 Triggering Instance Refresh to roll back active nodes..."
+aws autoscaling start-instance-refresh \
+    --auto-scaling-group-name "$ASG_NAME" \
+    --region "$REGION"
+
+echo "✅ Rollback triggered successfully. Monitor the AWS Console for node rotation."
